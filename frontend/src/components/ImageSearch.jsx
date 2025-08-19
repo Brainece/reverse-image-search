@@ -1,12 +1,14 @@
 import React, {useState} from 'react'
+import { Search, Loader2, LogIn, LogOut } from 'lucide-react';
 
-const ImageSearch = ({ username, password, onLogout }) => {
+const ImageSearch = ({onLogout}) => {
 
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null); 
     const [similarImages, setSimilarImages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
     
     const handleFileChange = (event) => {
         const file = event.target.files[0];
@@ -26,6 +28,9 @@ const ImageSearch = ({ username, password, onLogout }) => {
         setError('');
         setSimilarImages([]);   
 
+        const authToken = localStorage.getItem('authToken');
+        //console.log("authToken: ", authToken)
+
 
         if(!selectedFile) {
             alert("Please select a file");
@@ -38,8 +43,8 @@ const ImageSearch = ({ username, password, onLogout }) => {
 
 
         // create the Authorization header for Basic Auth
-        const credentials = `${username}:${password}`; // credentials string is username:password
-        const encodedCredentials = btoa(credentials); // encode the credentials using the btoa function
+        //const credentials = `${username}:${password}`; // credentials string is username:password
+        //const encodedCredentials = btoa(credentials); // encode the credentials using the btoa function
         //const authHeader = `Basic ${encodedCredentials}`; // create the Authorization header
         //formData.append('Authorization', authHeader); 
 
@@ -50,14 +55,14 @@ const ImageSearch = ({ username, password, onLogout }) => {
                 }, */
                 method: 'POST',
                 headers: {
-                    'Authorization': `Basic ${encodedCredentials}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: formData,
 
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    onLogout();
+                    //onLogout();
                     throw new Error("Authentication failed. Please check your username and password");
                 }
                 const errorData = await response.json();
@@ -81,13 +86,13 @@ const ImageSearch = ({ username, password, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-        <div>
+        <div className="flex justify-center items-center gap-2">
             <h1 className="text-xl text-center p-4">Reverse Search Image</h1>
             <button
                 onClick={onLogout}
                 className=""
             >
-                <Logout className="" /> Logout
+                <LogOut className="" /> Logout
             </button>
         </div>       
         <form>

@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import {Search, Loader2, LogIn, LogOut} from 'lucide-react';
+import { useNavigate } from "react-router";
 
-const Login = ({onLogin}) => {
+const Login = ({setIsLoggedIn}) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate();
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        const formData = new URLSearchParams()
+        formData.append('username', username);
+        formData.append('password', password);
 
         if(!username || !password ) {
             setError('Please enter both username and password.');
@@ -21,13 +28,23 @@ const Login = ({onLogin}) => {
         try {
             // In a real app, replace this with a proper login API call
             // Example: const response = await fetch(`${API_BASE_URL}/login`, { ... });
-            const credentials = btoa(`${username}:${password}`);
+            //const credentials = btoa(`${username}:${password}`);
             // Simple check to ensure we have credentials to pass on.
-            if (credentials) {
-              onLogin(username, password);
-            } else {
-              throw new Error('Invalid credentials');
-            }
+            const response = await fetch('http://localhost:8000/login/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: formData.toString()
+            });
+            const credentials = await response.json();
+            //console.log(credentials);
+            //console.log(credentials.token);
+            localStorage.setItem('authToken', credentials.access_token);
+            //localStorage.setItem('username', credentials.username);
+            setIsLoggedIn(true);
+            navigate('/search');
+            //localStorage.setItem('password', credentials.password);
           } catch (err) {
             setError('Failed to log in. Please check your credentials.');
             console.error('Login error:', err);
@@ -35,7 +52,6 @@ const Login = ({onLogin}) => {
             setLoading(false);
           } 
     }
-
 
   return (
     <div className="bg-gray-300 p-8 rounded-lg shadow-2xl space-y-8 max-w-6xl w-full mx-auto">
