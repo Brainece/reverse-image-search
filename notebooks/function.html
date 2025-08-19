@@ -1,0 +1,66 @@
+<!DOCTYPE Html>
+<html>
+    <head>
+        
+
+    </head>
+    <body>
+        <script>
+            /*function print(){
+                console.log(arguments)
+            }*/
+            //print()
+
+            /*const print = () => {
+                console.log(arguments)
+            }
+            print("hello", 400, false)*/
+
+            const obj = {
+            name: 'deeecode',
+            age: 200,
+            print: function() {
+                console.log(this)
+            }
+                /*{
+                function print2() {
+                console.log(this)
+                }
+                
+                print2()
+            }*/
+
+           
+        }
+    
+            obj.print()
+            // Window
+        // illustration of closures
+        const pet = function(name) {
+            const getName = function() {
+                // the inner function has access to the name variable of the outer function
+                return name;
+            };
+            return getName;
+
+        };
+
+        const myPet = pet('Vivie');
+        console.log(myPet())
+
+        // test this 
+        function Person(){
+            this.age = 0;
+
+            setInterval(function groupUp(){
+                this.age++
+               // console.log(this.age++)
+            },100);
+        }
+        const p = new Person();
+        console.log(p)
+        
+        </script>
+    </body>
+
+</html>
