@@ -1,5 +1,4 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, Response, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -10,6 +9,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Optional
 from datetime import datetime, timedelta
+from fastapi.staticfiles import StaticFiles
 
 # ml libraries
 import joblib
@@ -65,6 +65,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 app = FastAPI()
+#router = APIRouter()
 
 IMG_DIR = "../notebooks/archive/images/"
 #"/home/brian/Documents/Portfolio/image_search/reverse-image-search/notebooks/archive/images/"
@@ -242,3 +243,9 @@ async def search_similar_images(file: UploadFile = File(...), current_user: str 
     
     except Exception as e:
         return {"error": f"An error occurred during processing {e}"}, 400
+
+
+@app.post("/logout/")
+async def logout(response: Response):
+    response.delete_cookie(key="refresh_token")
+    return {"message": "Logged out successfully"}
