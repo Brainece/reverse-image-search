@@ -1,5 +1,8 @@
 import React, {useState} from 'react'
 import { Search, Loader2, LogIn, LogOut } from 'lucide-react';
+import axios from 'axios';
+
+axios.defaults.withCredentials = true;
 
 const ImageSearch = ({onLogout}) => {
 
@@ -49,28 +52,38 @@ const ImageSearch = ({onLogout}) => {
         //formData.append('Authorization', authHeader); 
 
         try {
-            const response = await fetch('http://localhost:8000/search-image/', {
-                /*headers: {
-                    'Content-Type': 'multipart/form-data'
-                }, */
+            // call using axios instead of fetch
+            const response = await axios.post('http://localhost:8000/search-image/', formData, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            /*const response = await fetch('http://localhost:8000/search-image/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: formData,
 
-            });
-            if (!response.ok) {
+            });*/
+            /*if (!response.ok) {
+                // use when using fetchAPI
+                
+            }*/
+            if (response.statusText !== 'OK') {
                 if (response.status === 401) {
                     //onLogout();
                     throw new Error("Authentication failed. Please check your username and password");
                 }
-                const errorData = await response.json();
+                //const errorData = await response.json(); - use with fetch
+                //console.log(response);
+                const errorData = await response.data;
                 throw new Error(errorData.detail || 'An unkown error occurred');
                 // handle other non-ok responses
             }
 
-            const data = await response.json();
+            //const data = await response.json(); - use with fetch
+            const data = await response.data;
             setSimilarImages(data.similar_images);
             //setSimilarImages(await response.json());
             //console.log(await response.json());
@@ -83,6 +96,33 @@ const ImageSearch = ({onLogout}) => {
             setLoading(false);
         }
     }
+    // axios interceptor for automatic token refresh
+    
+    axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        // check if the error is 401 Unauthorized
+        if(error.response.status === 401 && !originalRequest._retry) {
+          originalRequest.retry = true;
+          try {
+            // The browser automatically sends the http-only refresh token cookie
+            const response = await axios.post('http://localhost:8000/refresh-token/');
+            const newAccessToken = response.data.access_token;
+            localStorage.setItem('authToken', newAccessToken);
+            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+            // Re-execute the original failed request
+            return axios(originalRequest);
+          }
+          catch (refreshError) {
+            console.error('Refresh token failed:', refreshError);
+            return Promise.reject(error);
+          }
+        }
+        return Promise.reject(error);
+      }
+    ) 
+
 
   return (
     <div className="min-h-screen bg-slate-50">

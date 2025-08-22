@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import {Search, Loader2, LogIn, LogOut} from 'lucide-react';
 import { useNavigate } from "react-router";
+import axios from "axios";
+
+const API_BASE_URL = 'http://localhost:8000';
+
+axios.defaults.withCredentials = true; // set up axios to send cookies with every request
 
 const Login = ({setIsLoggedIn}) => {
     const [username, setUsername] = useState('');
@@ -9,6 +14,52 @@ const Login = ({setIsLoggedIn}) => {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+
+    const loginUser = async (e) => {
+      e.preventDefault();
+      setLoading(true);
+        setError('');
+
+      const formData = new URLSearchParams()
+      formData.append('username', username);
+      formData.append('password', password);
+
+      if(!username || !password ) {
+          setError('Please enter both username and password.');
+          setLoading(false);
+          return;
+      }
+
+      try {
+        const response = await axios.post(`${API_BASE_URL}/login/`, formData.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+        if (response.status !== 200) {
+          throw new Error('Login failed. Please check your credentials.');
+        }
+        localStorage.setItem('username', username);
+        localStorage.setItem('authToken', response.data.access_token);
+        setIsLoggedIn(true);
+        //return true;
+      } catch (error) {
+        // handle login errors
+        setError('Failed to log in. Please check your credentials.');
+        console.error('Login error:', error);
+        /*if (error.response) {
+          setError(error.response.data.detail || 'Login failed. Please check your credentials.');
+        } else if (error.request) {
+          setError('No response from the server. Please try again later.');
+        } else {
+          setError('Error: ' + error.message);
+        }*/
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // axios interceptor for error checking    
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -37,9 +88,12 @@ const Login = ({setIsLoggedIn}) => {
               },
               body: formData.toString()
             });
+            if (response.status !== 200) {
+              throw new Error('Failed to log in. Please check your credentials.');
+            }
+        
             const credentials = await response.json();
-            //console.log(credentials);
-            //console.log(credentials.token);
+
             localStorage.setItem('authToken', credentials.access_token);
             //localStorage.setItem('username', credentials.username);
             setIsLoggedIn(true);
@@ -58,7 +112,7 @@ const Login = ({setIsLoggedIn}) => {
         <h2>Login</h2>
         <p>Please Enter your credentials to access the image search</p>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={loginUser}>
             <div>
                 <label htmlFor="username">Username:</label>
                 <input 
@@ -72,8 +126,8 @@ const Login = ({setIsLoggedIn}) => {
                 />
             </div>
             <div>
-                <label htmlFor="password">Username:</label>
-                <input 
+                <label htmlFor="password">Password:</label>
+                <input
                     id="password"
                     type="password"
                     value={password}
